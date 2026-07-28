@@ -1,69 +1,78 @@
-import json
+import data_fetcher
 
 
-def load_data(file_path):
-    """Loads a JSON file"""
-    with open(file_path, "r") as handle:
-        return json.load(handle)
+def serialize_animal(animal):
+    """
+    Converts animal data into HTML format.
+    """
+
+    output = '<li class="cards__item">\n'
+
+    output += f'<div class="card__title">{animal["name"]}</div>\n'
+
+    output += '<p class="card__text">\n'
+
+    characteristics = animal.get("characteristics", {})
+
+    if "diet" in characteristics:
+        output += f'<strong>Diet:</strong> {characteristics["diet"]}<br/>\n'
+
+    if "locations" in animal:
+        if len(animal["locations"]) > 0:
+            output += f'<strong>Location:</strong> {animal["locations"][0]}<br/>\n'
+
+    if "type" in characteristics:
+        output += f'<strong>Type:</strong> {characteristics["type"]}<br/>\n'
+
+    output += "</p>\n"
+    output += "</li>\n"
+
+    return output
 
 
-# JSON-Datei laden
-animals_data = load_data("animals_data.json")
+def load_template():
+    """
+    Reads the HTML template.
+    """
+
+    with open("animals_template.html", "r") as file:
+        return file.read()
 
 
-# HTML-String für die Tiere erzeugen
-animals_info = ""
+def create_website(animals):
+    """
+    Creates the final HTML website.
+    """
 
-for animal in animals_data:
-    animals_info += '<li class="cards__item">\n'
+    template = load_template()
 
-    # Name
-    if "name" in animal:
-        animals_info += f'<div class="card__title">{animal["name"]}</div>\n'
+    animals_info = ""
 
-    # Textbereich
-    animals_info += '<p class="card__text">\n'
+    for animal in animals:
+        animals_info += serialize_animal(animal)
 
-    # Diet
-    if "characteristics" in animal and "diet" in animal["characteristics"]:
-        animals_info += (
-            f"<strong>Diet:</strong> "
-            f"{animal['characteristics']['diet']}<br/>\n"
-        )
+    if animals_info == "":
+        animals_info = "<h2>Dieses Tier existiert nicht.</h2>"
 
-    # Location
-    if "locations" in animal and animal["locations"]:
-        animals_info += (
-            f"<strong>Location:</strong> "
-            f"{animal['locations'][0]}<br/>\n"
-        )
+    html = template.replace(
+        "__REPLACE_ANIMALS_INFO__",
+        animals_info
+    )
 
-    # Type
-    if "characteristics" in animal and "type" in animal["characteristics"]:
-        animals_info += (
-            f"<strong>Type:</strong> "
-            f"{animal['characteristics']['type']}<br/>\n"
-        )
-
-    animals_info += "</p>\n"
-    animals_info += "</li>\n"
+    with open("animals.html", "w") as file:
+        file.write(html)
 
 
-# HTML Template lesen
-with open("animals_template.html", "r") as file:
-    html_content = file.read()
+def main():
+
+    animal_name = input("Please enter an animal: ")
+
+    animals = data_fetcher.fetch_data(animal_name)
+
+    create_website(animals)
+
+    print("Website was successfully generated to the file animals.html.")
 
 
-# Platzhalter ersetzen
-html_content = html_content.replace(
-    "__REPLACE_ANIMALS_INFO__",
-    animals_info
-)
-
-
-# Vorhandene HTML-Datei aktualisieren
-with open("animals_template.html", "w") as file:
-    file.write(html_content)
-
-
-print("animals_template.html wurde erfolgreich aktualisiert!")
+if __name__ == "__main__":
+    main()
